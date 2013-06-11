@@ -1,0 +1,1 @@
+class PayoneerException < Exception; end
