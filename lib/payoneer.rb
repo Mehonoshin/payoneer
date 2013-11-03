@@ -17,6 +17,11 @@ class Payoneer
     payoneer_api.transfer_funds(options)
   end
 
+  def self.payee_exists?(partner_id, username, password, payee_id)
+    payoneer_api = self.new(partner_id, username, password)
+    payoneer_api.payee_exists?(payee_id)
+  end
+
   def initialize(partner_id, username, password)
     @partner_id, @username, @password = partner_id, username, password
   end
@@ -30,6 +35,12 @@ class Payoneer
   def transfer_funds(options)
     result = get_api_call(transfer_funds_args(options))
     api_result(result)
+  end
+
+  def payee_exists?(payee_id)
+    result = get_api_call(payee_exists_args(payee_id))
+    api_result(result)
+    true
   end
 
   private
@@ -48,7 +59,11 @@ class Payoneer
 
   def api_error_description(body)
     body_hash = Hash.from_xml(body)
-    body_hash["PayoneerResponse"]["Description"]
+    if body_hash["PayoneerResponse"]
+      body_hash["PayoneerResponse"]["Description"]
+    else
+      body_hash["GetPayeeDetails"]["Error"]
+    end
   end
 
   def get_api_call(args_hash)
@@ -59,6 +74,7 @@ class Payoneer
     http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
     request = Net::HTTP::Get.new(uri.request_uri)
+    puts uri.request_uri
     http.request(request).body
   end
 
@@ -75,20 +91,31 @@ class Payoneer
   def transfer_funds_args(options)
     {
       "mname" => "PerformPayoutPayment",
-      "p1" => options[:username],
-      "p2" => options[:password],
-      "p3" => options[:partner_id],
+      "p1" => @username,
+      "p2" => @password,
+      "p3" => @partner_id,
       "p4" => options[:program_id],
       "p5" => options[:internal_payment_id],
       "p6" => options[:internal_payee_id],
       "p7" => options[:amount],
       "p8" => options[:description],
-      "p9" => options[:date]
+      "p9" => options[:date].strftime('%m/%d/%Y %H:%M:%S')
+    }
+  end
+
+  def payee_exists_args(payee_id)
+    {
+      "mname" => "GetPayeeDetails",
+      "p1" => @username,
+      "p2" => @password,
+      "p3" => @partner_id,
+      "p4" => payee_id
+
     }
   end
 
   def api_url
-    Rails.env.production? ? PRODUCTION_API_URL : SANDBOX_API_URL
+    PRODUCTION_API_URL
   end
 
 end
