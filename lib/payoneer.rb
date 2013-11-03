@@ -40,7 +40,6 @@ class Payoneer
   def payee_exists?(payee_id)
     result = get_api_call(payee_exists_args(payee_id))
     api_result(result)
-    true
   end
 
   private
