@@ -109,7 +109,6 @@ class Payoneer
       "p2" => @password,
       "p3" => @partner_id,
       "p4" => payee_id
-
     }
   end
 
