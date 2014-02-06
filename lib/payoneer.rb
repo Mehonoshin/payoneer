@@ -67,13 +67,12 @@ class Payoneer
 
   def get_api_call(args_hash)
     uri = URI.parse(api_url)
-    uri.query = URI.encode_www_form(args_hash)
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true
     http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
-    request = Net::HTTP::Get.new(uri.request_uri)
-    puts uri.request_uri
+    request = Net::HTTP::Post.new(uri.request_uri)
+    request.set_form_data(args_hash)
     http.request(request).body
   end
 
