@@ -45,8 +45,9 @@ class Payoneer
   private
 
   def api_result(body)
+    puts "[debug] Payoneer Response: #{body}"
     if is_xml? body
-      raise PayoneerException, api_error_description(body)
+      xml_response_result(body)
     else
       body
     end
@@ -54,6 +55,16 @@ class Payoneer
 
   def is_xml?(body)
     Nokogiri::XML(body).errors.empty?
+  end
+
+  def xml_response_result(body)
+    raise(PayoneerException, api_error_description(body)) if failure_api_response?(body)
+    true
+  end
+
+  def failure_api_response?(body)
+    body_hash = Hash.from_xml(body)
+    (body_hash["PayoneerResponse"] && body_hash["PayoneerResponse"]["Description"]) || (body_hash["GetPayeeDetails"] && body_hash["GetPayeeDetails"]["Error"])
   end
 
   def api_error_description(body)
